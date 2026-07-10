@@ -1,0 +1,34 @@
+# === Dependencies ===
+node_modules/
+
+# === Build Output ===
+dist/
+dist-ssr/
+
+# === Vite Cache ===
+.vite/
+
+# === Environment Variables ===
+.env
+.env.local
+.env.*.local
+
+# === TypeScript ===
+*.tsbuildinfo
+
+# === Testing / Coverage ===
+coverage/
+
+# === Editor & OS ===
+.DS_Store
+Thumbs.db
+*.pem
+
+# === Logs ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# === Deployment ===
+.vercel
