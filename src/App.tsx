@@ -116,22 +116,20 @@ function App() {
       </div>
       <div className="main-content">
         <div className="workspace-container">
-          <div className="canvas-scroll-area">
-            <CanvasWorkspace
-              currentTool={currentTool}
-              brushType={brushType}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-              strokeWidth={strokeWidth}
-              onHistoryChange={(undoable, redoable) => {
-                setCanUndo(undoable);
-                setCanRedo(redoable);
-              }}
-              setCanvasApi={(api) => {
-                canvasApiRef.current = api;
-              }}
-            />
-          </div>
+          <CanvasWorkspace
+            currentTool={currentTool}
+            brushType={brushType}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            strokeWidth={strokeWidth}
+            onHistoryChange={(undoable, redoable) => {
+              setCanUndo(undoable);
+              setCanRedo(redoable);
+            }}
+            setCanvasApi={(api) => {
+              canvasApiRef.current = api;
+            }}
+          />
         </div>
       </div>
       

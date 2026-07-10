@@ -11,7 +11,7 @@ export type ToolType =
   | 'eyedropper'
   | 'selection';
 
-export type BrushType = 'normal' | 'spray';
+export type BrushType = 'normal' | 'spray' | 'calligraphy' | 'watercolor' | 'marker' | 'chalk' | 'splatter' | 'pixel';
 
 export type ShapeMode = 'outline' | 'fill' | 'both';
 

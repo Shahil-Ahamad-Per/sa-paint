@@ -311,48 +311,24 @@ body {
 
 .workspace-container {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   background-color: #ffffff;
-  scrollbar-width: thin;
-  scrollbar-color: #c4c7cc #f0f0f0;
+  display: flex;
 }
 
-.workspace-container::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.workspace-container::-webkit-scrollbar-track {
-  background: #f0f0f0;
-}
-
-.workspace-container::-webkit-scrollbar-thumb {
-  background: #c4c7cc;
-  border-radius: 4px;
-}
-
-.workspace-container::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-.workspace-container::-webkit-scrollbar-corner {
-  background: #f0f0f0;
-}
-
-/* No padding, no shadow — canvas fills flush */
 .canvas-scroll-area {
-  display: inline-block;
-  line-height: 0; /* kill inline gap */
+  display: none; /* no longer used */
 }
 
 .canvas-wrapper {
   position: relative;
-  background-color: white;
-  display: block;
+  flex: 1;
+  display: flex;
 }
 
 .main-canvas {
   display: block;
+  flex: 1;
 }
 
 .temp-canvas {
