@@ -1,10 +1,20 @@
-import React from 'react';
-import { Download, FolderOpen, FilePlus, Undo, Redo, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import React from "react";
+import {
+  Download,
+  FolderOpen,
+  FilePlus,
+  Undo,
+  Redo,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
+import { SaveFormat } from "../types";
 
 interface TopMenuProps {
   onNew: () => void;
   onOpen: () => void;
-  onSave: (format: 'png' | 'jpg' | 'pdf') => void;
+  onSave: (format: SaveFormat) => void;
   onUndo: () => void;
   onRedo: () => void;
   onClear: () => void;
@@ -24,7 +34,7 @@ const TopMenu: React.FC<TopMenuProps> = ({
   canUndo,
   canRedo,
   isRibbonOpen,
-  toggleRibbon
+  toggleRibbon,
 }) => {
   return (
     <div className="top-menu">
@@ -43,13 +53,13 @@ const TopMenu: React.FC<TopMenuProps> = ({
             <span>Save As</span>
           </button>
           <div className="dropdown-content">
-            <button onClick={() => onSave('png')}>PNG Image</button>
-            <button onClick={() => onSave('jpg')}>JPG Image</button>
-            <button onClick={() => onSave('pdf')}>PDF Document</button>
+            <button onClick={() => onSave("png")}>PNG Image</button>
+            <button onClick={() => onSave("jpg")}>JPG Image</button>
+            <button onClick={() => onSave("pdf")}>PDF Document</button>
           </div>
         </div>
       </div>
-      <div className="menu-group" style={{marginLeft: 'auto'}}>
+      <div className="menu-group" style={{ marginLeft: "auto" }}>
         <button onClick={onUndo} disabled={!canUndo} title="Undo">
           <Undo size={18} />
         </button>
@@ -60,10 +70,15 @@ const TopMenu: React.FC<TopMenuProps> = ({
           <Trash2 size={18} />
           <span>Clear</span>
         </button>
-        
-        <div style={{ width: '1px', backgroundColor: '#e5e7eb', margin: '0 8px' }} />
-        
-        <button onClick={toggleRibbon} title={isRibbonOpen ? "Collapse Ribbon" : "Expand Ribbon"}>
+
+        <div
+          style={{ width: "1px", backgroundColor: "#e5e7eb", margin: "0 8px" }}
+        />
+
+        <button
+          onClick={toggleRibbon}
+          title={isRibbonOpen ? "Collapse Ribbon" : "Expand Ribbon"}
+        >
           {isRibbonOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
       </div>
