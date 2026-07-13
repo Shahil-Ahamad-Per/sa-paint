@@ -533,7 +533,7 @@ body {
   .top-menu .menu-group button > span {
     display: none;
   }
-  
+
   .top-menu .menu-group button {
     padding: 8px; /* Larger tap target */
     min-width: 44px;
@@ -545,7 +545,7 @@ body {
   .ribbon-container {
     max-height: 250px;
   }
-  
+
   .ribbon {
     overflow-x: auto;
     padding: 8px;
@@ -553,7 +553,7 @@ body {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none; /* Hide scrollbar Firefox */
   }
-  
+
   .ribbon::-webkit-scrollbar {
     display: none; /* Hide scrollbar Chrome/Safari */
   }
@@ -562,7 +562,7 @@ body {
   .ribbon-btn.large span {
     display: none;
   }
-  
+
   .custom-color-picker label span {
     display: none;
   }
@@ -572,32 +572,32 @@ body {
     min-width: 40px;
     min-height: 40px;
   }
-  
+
   .ribbon-btn.large {
     min-width: 44px;
     min-height: 44px;
   }
-  
+
   .color-swatch-small {
     width: 24px;
     height: 24px;
   }
-  
+
   .color-swatch-large {
     width: 40px;
     height: 40px;
   }
-  
+
   .edit-colors-icon {
     width: 40px;
     height: 40px;
   }
-  
+
   /* Make color grid scrollable if needed or fit */
   .color-palette-ribbon {
     gap: 8px;
   }
-  
+
   .standard-colors-grid {
     grid-template-columns: repeat(5, 1fr);
     grid-template-rows: repeat(4, 1fr);

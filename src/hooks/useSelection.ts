@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import type { AlignDirection } from "../components/AlignToolbar";
 
 export interface SelectionState {
   x: number;
@@ -15,6 +16,7 @@ export interface SelectionState {
   origY: number;
   origW: number;
   origH: number;
+  compositeOperation: GlobalCompositeOperation;
 }
 
 export interface SelectionActions {
@@ -31,6 +33,9 @@ export interface SelectionActions {
     w: number,
     h: number,
   ) => void;
+  alignSelection: (direction: AlignDirection) => void;
+  setCompositeOperation: (op: GlobalCompositeOperation) => void;
+  getHoverCursor: (x: number, y: number) => string | null;
 }
 
 function drawSelectionBorder(
@@ -264,7 +269,11 @@ export function useSelection(
     const sel = selectionRef.current;
     if (!sel || !sel.imageCanvas || !mainCtx || !tempCtx) return false;
 
+    mainCtx.save();
+    mainCtx.globalCompositeOperation = sel.compositeOperation;
     mainCtx.drawImage(sel.imageCanvas, sel.x, sel.y, sel.w, sel.h);
+    mainCtx.restore();
+
     tempCtx.clearRect(0, 0, tempCanvasWidth, tempCanvasHeight);
     setSelection(null);
     selectionRef.current = null;
@@ -302,6 +311,7 @@ export function useSelection(
         origY: y,
         origW: w,
         origH: h,
+        compositeOperation: "source-over",
       };
 
       renderSelection(newSel);
@@ -311,6 +321,78 @@ export function useSelection(
     [renderSelection],
   );
 
+  const alignSelection = useCallback(
+    (direction: AlignDirection) => {
+      const sel = selectionRef.current;
+      if (!sel || !sel.imageCanvas) return;
+
+      let newX = sel.x;
+      let newY = sel.y;
+
+      switch (direction) {
+        case "left":
+          newX = 0;
+          break;
+        case "center-h":
+          newX = (tempCanvasWidth - sel.w) / 2;
+          break;
+        case "right":
+          newX = tempCanvasWidth - sel.w;
+          break;
+        case "top":
+          newY = 0;
+          break;
+        case "center-v":
+          newY = (tempCanvasHeight - sel.h) / 2;
+          break;
+        case "bottom":
+          newY = tempCanvasHeight - sel.h;
+          break;
+      }
+
+      const newSel: SelectionState = {
+        ...sel,
+        x: newX,
+        y: newY,
+        origX: newX,
+        origY: newY,
+      };
+      renderSelection(newSel);
+      setSelection(newSel);
+      selectionRef.current = newSel;
+    },
+    [tempCanvasWidth, tempCanvasHeight, renderSelection],
+  );
+
+  const setCompositeOperation = useCallback(
+    (op: GlobalCompositeOperation) => {
+      const sel = selectionRef.current;
+      if (!sel) return;
+      const newSel = { ...sel, compositeOperation: op };
+      setSelection(newSel);
+      selectionRef.current = newSel;
+    },
+    [],
+  );
+
+  const getHoverCursor = useCallback((x: number, y: number): string | null => {
+    const sel = selectionRef.current;
+    if (!sel || !sel.imageCanvas) return null;
+
+    const handle = getResizeHandle(x, y, sel.x, sel.y, sel.w, sel.h);
+    if (handle) {
+      if (handle === "nw" || handle === "se") return "nwse-resize";
+      if (handle === "ne" || handle === "sw") return "nesw-resize";
+      if (handle === "n" || handle === "s") return "ns-resize";
+      if (handle === "e" || handle === "w") return "ew-resize";
+    }
+
+    if (x >= sel.x && x <= sel.x + sel.w && y >= sel.y && y <= sel.y + sel.h) {
+      return "move";
+    }
+    return null;
+  }, []);
+
   return {
     selection,
     onMouseDown,
@@ -319,5 +401,8 @@ export function useSelection(
     commit,
     clear,
     setFromImageData,
+    alignSelection,
+    setCompositeOperation,
+    getHoverCursor,
   };
 }

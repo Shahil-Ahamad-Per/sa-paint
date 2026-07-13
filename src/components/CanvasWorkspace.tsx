@@ -5,6 +5,7 @@ import {
   useImperativeHandle,
   forwardRef,
   MouseEvent,
+  TouchEvent as ReactTouchEvent,
   useCallback,
 } from "react";
 import { ToolType, Point, BrushType, SaveFormat } from "../types";
@@ -18,6 +19,7 @@ import {
   getPencilCursor,
   getEyedropperCursor,
 } from "../utils/cursors";
+import SelectionContextMenu from "./SelectionContextMenu";
 
 export interface CanvasWorkspaceHandle {
   undo: () => void;
@@ -55,6 +57,8 @@ const CanvasWorkspace = forwardRef<CanvasWorkspaceHandle, CanvasWorkspaceProps>(
       y: number;
       value: string;
     } | null>(null);
+
+    const [contextMenuPos, setContextMenuPos] = useState<{ x: number, y: number } | null>(null);
 
     const [tempCanvasSize, setTempCanvasSize] = useState({ w: 0, h: 0 });
 
@@ -147,17 +151,12 @@ const CanvasWorkspace = forwardRef<CanvasWorkspaceHandle, CanvasWorkspaceProps>(
           return;
         }
 
-        if (currentTool === "selection") {
-          if (selection.selection?.imageCanvas) {
-            const handled = selection.onMouseDown(x, y);
-            if (handled) return;
-
-            commitSelection();
-            return;
-          }
-        } else {
-          commitSelection();
+        if (selection.selection?.imageCanvas) {
+          const handled = selection.onMouseDown(x, y);
+          if (handled) return;
         }
+        
+        commitSelection();
 
         if (currentTool === "fill") {
           const ctx = contextRef.current;
@@ -216,7 +215,14 @@ const CanvasWorkspace = forwardRef<CanvasWorkspaceHandle, CanvasWorkspaceProps>(
       (e: MouseEvent<HTMLCanvasElement>) => {
         const { x, y } = getCoordinates(e);
 
-        if (currentTool === "selection" && selection.selection?.imageCanvas) {
+        // Update cursor dynamically
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const hoverCursor = selection.getHoverCursor(x, y);
+          canvas.style.cursor = hoverCursor || getCursorStyle();
+        }
+
+        if (selection.selection?.imageCanvas) {
           if (selection.selection.isResizing || selection.selection.isDragging) {
             selection.onMouseMove(x, y);
             return;
@@ -314,7 +320,6 @@ const CanvasWorkspace = forwardRef<CanvasWorkspaceHandle, CanvasWorkspaceProps>(
     const stopDrawing = useCallback(
       (e: MouseEvent<HTMLCanvasElement>) => {
         if (
-          currentTool === "selection" &&
           selection.selection &&
           (selection.selection.isDragging || selection.selection.isResizing)
         ) {
@@ -365,12 +370,27 @@ const CanvasWorkspace = forwardRef<CanvasWorkspaceHandle, CanvasWorkspaceProps>(
           currentTool !== "eraser" &&
           currentTool !== "fill"
         ) {
-          const ctx = contextRef.current;
           const tempCanvas = tempCanvasRef.current;
           const tCtx = tempContextRef.current;
-          if (ctx && tempCanvas && tCtx) {
-            ctx.drawImage(tempCanvas, 0, 0);
-            tCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+          if (tempCanvas && tCtx && startPoint) {
+            const padding = Math.ceil(strokeWidth / 2) + 2;
+            const minX = Math.min(startPoint.x, x) - padding;
+            const minY = Math.min(startPoint.y, y) - padding;
+            const maxX = Math.max(startPoint.x, x) + padding;
+            const maxY = Math.max(startPoint.y, y) + padding;
+            
+            const selX = Math.max(0, Math.floor(minX));
+            const selY = Math.max(0, Math.floor(minY));
+            const selW = Math.min(tempCanvas.width - selX, Math.ceil(maxX - minX));
+            const selH = Math.min(tempCanvas.height - selY, Math.ceil(maxY - minY));
+
+            if (selW > 0 && selH > 0) {
+              const capturedData = tCtx.getImageData(selX, selY, selW, selH);
+              tCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+              selection.setFromImageData(capturedData, selX, selY, selW, selH);
+            } else {
+              tCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+            }
           }
         }
 
@@ -399,7 +419,23 @@ const CanvasWorkspace = forwardRef<CanvasWorkspaceHandle, CanvasWorkspaceProps>(
 
     const handleContextMenu = useCallback((e: MouseEvent) => {
       e.preventDefault();
-    }, []);
+      
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      
+      const sel = selection.selection;
+      if (sel && sel.imageCanvas && x >= sel.x && x <= sel.x + sel.w && y >= sel.y && y <= sel.y + sel.h) {
+        setContextMenuPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      } else {
+        setContextMenuPos(null);
+      }
+    }, [selection]);
 
     const getCursorStyle = useCallback(() => {
       if (currentTool === "text") return "text";
@@ -557,6 +593,46 @@ const CanvasWorkspace = forwardRef<CanvasWorkspaceHandle, CanvasWorkspaceProps>(
       }
     }, [tempCanvasSize]);
 
+    // --- Touch event helpers ---
+    const handleTouchStart = useCallback(
+      (e: ReactTouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const syntheticEvent = {
+          clientX: (e.touches[0] || e.changedTouches[0]).clientX,
+          clientY: (e.touches[0] || e.changedTouches[0]).clientY,
+          button: 0,
+        } as unknown as MouseEvent<HTMLCanvasElement>;
+        startDrawing(syntheticEvent);
+      },
+      [startDrawing],
+    );
+
+    const handleTouchMove = useCallback(
+      (e: ReactTouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const syntheticEvent = {
+          clientX: (e.touches[0] || e.changedTouches[0]).clientX,
+          clientY: (e.touches[0] || e.changedTouches[0]).clientY,
+          button: 0,
+        } as unknown as MouseEvent<HTMLCanvasElement>;
+        draw(syntheticEvent);
+      },
+      [draw],
+    );
+
+    const handleTouchEnd = useCallback(
+      (e: ReactTouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const syntheticEvent = {
+          clientX: (e.changedTouches[0]).clientX,
+          clientY: (e.changedTouches[0]).clientY,
+          button: 0,
+        } as unknown as MouseEvent<HTMLCanvasElement>;
+        stopDrawing(syntheticEvent);
+      },
+      [stopDrawing],
+    );
+
     return (
       <div className="canvas-wrapper">
         <canvas
@@ -566,14 +642,28 @@ const CanvasWorkspace = forwardRef<CanvasWorkspaceHandle, CanvasWorkspaceProps>(
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseOut={stopDrawing}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           onContextMenu={handleContextMenu}
-          style={{ cursor: getCursorStyle() }}
+          style={{ cursor: getCursorStyle(), touchAction: "none" }}
         />
         <canvas
           ref={tempCanvasRef}
           className="temp-canvas"
           style={{ pointerEvents: "none" }}
         />
+
+        {contextMenuPos && (
+          <SelectionContextMenu
+            x={contextMenuPos.x}
+            y={contextMenuPos.y}
+            onBringToFront={() => selection.setCompositeOperation("source-over")}
+            onSendToBack={() => selection.setCompositeOperation("destination-over")}
+            onDelete={() => selection.clear()}
+            onClose={() => setContextMenuPos(null)}
+          />
+        )}
 
         {textInput && (
           <textarea
