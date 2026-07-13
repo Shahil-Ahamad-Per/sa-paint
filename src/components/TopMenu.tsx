@@ -8,6 +8,7 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
+  Github,
 } from "lucide-react";
 import { SaveFormat } from "../types";
 
@@ -60,6 +61,14 @@ const TopMenu: React.FC<TopMenuProps> = ({
         </div>
       </div>
       <div className="menu-group" style={{ marginLeft: "auto" }}>
+        <button title="github">
+          <a
+            href="https://github.com/Shahil-Ahamad-Per/sa-paint"
+            target="_blank"
+          >
+            <Github size={18} />
+          </a>
+        </button>
         <button onClick={onUndo} disabled={!canUndo} title="Undo">
           <Undo size={18} />
         </button>
